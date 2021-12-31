@@ -35,14 +35,14 @@ namespace Xenophyte_Connector_All.Setting
 
         public const int MAJOR_UPDATE_1_SECURITY_CERTIFICATE_SIZE_ITEM = 256;
 
-        public const string NETWORK_GENESIS_DEFAULT_KEY = "XenophyteKEY"; // DEFAULT GENESIS KEY [Small static part of dynamic key encryption between tools and blockchain.]
+        public const string NETWORK_GENESIS_DEFAULT_KEY = "XENOPHYTEKEY"; // DEFAULT GENESIS KEY [Small static part of dynamic key encryption between tools and blockchain.]
 
         /// <summary>
         ///     UPDATES - Update done at 17/10/2018
         /// </summary>
-        public static string NETWORK_GENESIS_KEY = "XenophyteKEY"; // GENESIS KEY [Small static part included on dynamic key encryption between tools and blockchain, updated by the blockchain in real time.]
+        public static string NETWORK_GENESIS_KEY = "XENOPHYTEKEY"; // GENESIS KEY [Small static part included on dynamic key encryption between tools and blockchain, updated by the blockchain in real time.]
 
-        public const string NETWORK_GENESIS_SECONDARY_KEY = "XenophyteSEED"; // GENESIS SECONDARY KEY [Layer encryption key included on dynamic certificate key between tools and seed nodes]
+        public const string NETWORK_GENESIS_SECONDARY_KEY = "XENOPHYTESEED"; // GENESIS SECONDARY KEY [Layer encryption key included on dynamic certificate key between tools and seed nodes]
 
         public const string PacketSplitSeperator = "*";
 
@@ -53,15 +53,11 @@ namespace Xenophyte_Connector_All.Setting
         public static Dictionary<string, Tuple<string, bool>> SeedNodeIp = new Dictionary<string, Tuple<string, bool>>
         {
             {"87.98.156.228", new Tuple<string, bool>("FR", true) },
-            {"66.70.227.204", new Tuple<string, bool>("CA", true) },
-            {"74.121.191.114", new Tuple<string, bool>("USA-SEATTLE", true) },
         };
 
         public static Dictionary<string, Tuple<int, long>> SeedNodeDisconnectScore = new Dictionary<string, Tuple<int, long>>
         {
             {"87.98.156.228", new Tuple<int, long>(0, 0)},
-            {"66.70.227.204", new Tuple<int, long>(0, 0)},
-            {"74.121.191.114", new Tuple<int, long>(0, 0)}
         };
 
         public const decimal MinimumWalletTransactionFee = 0.000010000m;
@@ -87,6 +83,6 @@ namespace Xenophyte_Connector_All.Setting
         public const int SeedNodeMaxKeepAliveDisconnection = 15; // Keep alive total disconnection pending 15 seconds.
         public const int WalletMinPasswordLength = 8; // Minimum password length
         public const string CoinName = "Xenophyte";
-        public const string CoinNameMin = "XIRO";
+        public const string CoinNameMin = "XENO";
     }
 }
