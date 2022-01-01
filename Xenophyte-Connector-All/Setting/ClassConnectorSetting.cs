@@ -83,6 +83,6 @@ namespace Xenophyte_Connector_All.Setting
         public const int SeedNodeMaxKeepAliveDisconnection = 15; // Keep alive total disconnection pending 15 seconds.
         public const int WalletMinPasswordLength = 8; // Minimum password length
         public const string CoinName = "Xenophyte";
-        public const string CoinNameMin = "XENO";
+        public const string CoinNameMin = "XENOP";
     }
 }
