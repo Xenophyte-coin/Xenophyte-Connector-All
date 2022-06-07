@@ -51,6 +51,7 @@ namespace Xenophyte_Connector_All.Wallet
         public string WalletPhase { get; set; }
         private byte[] AesIvCertificate;
         private byte[] AesSaltCertificate;
+        private bool _oldVersion = false;
 
         /// <summary>
         ///     Can select the wallet phase for network (login, create).
@@ -142,9 +143,8 @@ namespace Xenophyte_Connector_All.Wallet
                             return packetCompleted;
                         }
                         if (packet.Replace(ClassConnectorSetting.PacketSplitSeperator, "") != ClassWalletCommand.ClassWalletReceiveEnumeration.WalletInvalidPacket)
-                        {
                             return DecryptPacketWallet(packet);
-                        }
+                        
 
                         return ClassWalletCommand.ClassWalletReceiveEnumeration.WalletInvalidPacket;
                     }
@@ -177,7 +177,7 @@ namespace Xenophyte_Connector_All.Wallet
                 default:
                     if (AesIvCertificate == null)
                     {
-                        using (PasswordDeriveBytes password = new PasswordDeriveBytes(WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY, ClassUtils.GetByteArrayFromString(ClassUtils.FromHex((WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY).Substring(0, 8)))))
+                        using (PasswordDeriveBytes password = new PasswordDeriveBytes(WalletAddress + WalletPassword + WalletKey + (_oldVersion ? ClassConnectorSetting.NETWORK_GENESIS_KEY_XIRO : ClassConnectorSetting.NETWORK_GENESIS_KEY), ClassUtils.GetByteArrayFromString(ClassUtils.FromHex((WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY).Substring(0, 8)))))
                         {
                             AesIvCertificate = password.GetBytes(ClassConnectorSetting.MAJOR_UPDATE_1_SECURITY_CERTIFICATE_SIZE / 8);
                             AesSaltCertificate = password.GetBytes(16);
@@ -204,21 +204,38 @@ namespace Xenophyte_Connector_All.Wallet
                 case ClassWalletPhase.Login:
                     return packet;
                 default:
-                    if (AesIvCertificate == null)
                     {
-                        using (PasswordDeriveBytes password = new PasswordDeriveBytes(WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY, ClassUtils.GetByteArrayFromString(ClassUtils.FromHex((WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY).Substring(0, 8)))))
+                        if (AesIvCertificate == null)
                         {
-                            AesIvCertificate = password.GetBytes(ClassConnectorSetting.MAJOR_UPDATE_1_SECURITY_CERTIFICATE_SIZE / 8);
-                            AesSaltCertificate = password.GetBytes(16);
+                            using (PasswordDeriveBytes password = new PasswordDeriveBytes(WalletAddress + WalletPassword + WalletKey + (_oldVersion ? ClassConnectorSetting.NETWORK_GENESIS_KEY_XIRO : ClassConnectorSetting.NETWORK_GENESIS_KEY), ClassUtils.GetByteArrayFromString(ClassUtils.FromHex((WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY).Substring(0, 8)))))
+                            {
+                                AesIvCertificate = password.GetBytes(ClassConnectorSetting.MAJOR_UPDATE_1_SECURITY_CERTIFICATE_SIZE / 8);
+                                AesSaltCertificate = password.GetBytes(16);
+                            }
                         }
+                        string packetResult = ClassAlgo.GetDecryptedResult(ClassAlgoEnumeration.Rijndael, packet, ClassWalletNetworkSetting.KeySize, AesIvCertificate, AesSaltCertificate); // AES
+
+                        if (packetResult == ClassAlgoErrorEnumeration.AlgoError)
+                        {
+                            using (PasswordDeriveBytes password = new PasswordDeriveBytes(WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY_XIRO, ClassUtils.GetByteArrayFromString(ClassUtils.FromHex((WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY).Substring(0, 8)))))
+                            {
+                                AesIvCertificate = password.GetBytes(ClassConnectorSetting.MAJOR_UPDATE_1_SECURITY_CERTIFICATE_SIZE / 8);
+                                AesSaltCertificate = password.GetBytes(16);
+                            }
+
+                            packetResult = ClassAlgo.GetDecryptedResult(ClassAlgoEnumeration.Rijndael, packet, ClassWalletNetworkSetting.KeySize, AesIvCertificate, AesSaltCertificate); // AES
+
+                            _oldVersion = packetResult != ClassAlgoErrorEnumeration.AlgoError;
+                        }
+
+                        return packetResult;
                     }
-                    return ClassAlgo.GetDecryptedResult(ClassAlgoEnumeration.Rijndael, packet, ClassWalletNetworkSetting.KeySize, AesIvCertificate, AesSaltCertificate); // AES
             }
         }
 
         public void UpdateWalletIv()
         {
-            using (PasswordDeriveBytes password = new PasswordDeriveBytes(WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY, ClassUtils.GetByteArrayFromString(ClassUtils.FromHex((WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY).Substring(0, 8)))))
+            using (PasswordDeriveBytes password = new PasswordDeriveBytes(WalletAddress + WalletPassword + WalletKey + (_oldVersion ? ClassConnectorSetting.NETWORK_GENESIS_KEY_XIRO : ClassConnectorSetting.NETWORK_GENESIS_KEY), ClassUtils.GetByteArrayFromString(ClassUtils.FromHex((WalletAddress + WalletPassword + WalletKey + ClassConnectorSetting.NETWORK_GENESIS_KEY).Substring(0, 8)))))
             {
                 AesIvCertificate = password.GetBytes(ClassConnectorSetting.MAJOR_UPDATE_1_SECURITY_CERTIFICATE_SIZE / 8);
                 AesSaltCertificate = password.GetBytes(16);

@@ -33,10 +33,7 @@ namespace Xenophyte_Connector_All.Utils
         public static string GetDecryptedResult(string idAlgo, string result, int size, byte[] AesIv, byte[] AesSalt)
         {
             if (result == ClassSeedNodeStatus.SeedNone || result == ClassSeedNodeStatus.SeedError)
-            {
                 return result;
-            }
-
             try
             {
 
@@ -44,19 +41,14 @@ namespace Xenophyte_Connector_All.Utils
                 {
                     case ClassAlgoEnumeration.Rijndael:
                         if (ClassUtils.IsBase64String(result))
-                        {
                             return Rijndael.DecryptString(result, size, AesIv, AesSalt);
-
-                        }
-
                         break;
                     case ClassAlgoEnumeration.Xor:
                         break;
                 }
             }
-            catch (Exception erreur)
+            catch 
             {
-
                 return ClassAlgoErrorEnumeration.AlgoError;
             }
 
@@ -75,9 +67,7 @@ namespace Xenophyte_Connector_All.Utils
         public static string GetDecryptedResultManual(string idAlgo, string result, string key, int size)
         {
             if (result == ClassSeedNodeStatus.SeedNone || result == ClassSeedNodeStatus.SeedError)
-            {
                 return result;
-            }
 
             try
             {
@@ -85,20 +75,15 @@ namespace Xenophyte_Connector_All.Utils
                 {
                     case ClassAlgoEnumeration.Rijndael:
                         if (ClassUtils.IsBase64String(result))
-                        {
                             return Rijndael.DecryptStringManual(result, key, size);
-                        }
 
                         break;
                     case ClassAlgoEnumeration.Xor:
                         break;
                 }
             }
-            catch (Exception erreur)
+            catch
             {
-#if DEBUG
-                Debug.WriteLine("Error Decrypt of " + result + " with key: "+key+" : " + erreur.Message);
-#endif
                 return ClassAlgoErrorEnumeration.AlgoError;
             }
 
@@ -128,11 +113,8 @@ namespace Xenophyte_Connector_All.Utils
                         break;
                 }
             }
-            catch (Exception erreur)
+            catch
             {
-#if DEBUG
-                Debug.WriteLine("Error Encrypt of " + result + " : " + erreur.Message);
-#endif
                 return ClassAlgoErrorEnumeration.AlgoError;
             }
 
@@ -161,11 +143,8 @@ namespace Xenophyte_Connector_All.Utils
                         break;
                 }
             }
-            catch (Exception erreur)
+            catch
             {
-#if DEBUG
-                Debug.WriteLine("Error Encrypt of " + result + " : " + erreur.Message);
-#endif
                 return ClassAlgoErrorEnumeration.AlgoError;
             }
 
@@ -240,25 +219,32 @@ namespace Xenophyte_Connector_All.Utils
         /// <returns></returns>
         public static string DecryptString(string cipherText, int keysize, byte[] aesIv, byte[] aesSalt)
         {
-            using (var symmetricKey = new AesCryptoServiceProvider() { Mode = CipherMode.CFB })
+            try
             {
-                symmetricKey.BlockSize = 128;
-                symmetricKey.KeySize = keysize;
-                symmetricKey.Padding = PaddingMode.PKCS7;
-                symmetricKey.Key = aesIv;
-                using (ICryptoTransform decryptor = symmetricKey.CreateDecryptor(aesIv, aesSalt))
+                using (var symmetricKey = new AesCryptoServiceProvider() { Mode = CipherMode.CFB })
                 {
-                    byte[] cipherTextBytes = Convert.FromBase64String(cipherText);
-                    using (MemoryStream memoryStream = new MemoryStream(cipherTextBytes))
+                    symmetricKey.BlockSize = 128;
+                    symmetricKey.KeySize = keysize;
+                    symmetricKey.Padding = PaddingMode.PKCS7;
+                    symmetricKey.Key = aesIv;
+                    using (ICryptoTransform decryptor = symmetricKey.CreateDecryptor(aesIv, aesSalt))
                     {
-                        using (CryptoStream cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
+                        byte[] cipherTextBytes = Convert.FromBase64String(cipherText);
+                        using (MemoryStream memoryStream = new MemoryStream(cipherTextBytes))
                         {
-                            byte[] plainTextBytes = new byte[cipherTextBytes.Length];
-                            int decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
-                            return Encoding.UTF8.GetString(plainTextBytes, 0, decryptedByteCount);
+                            using (CryptoStream cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
+                            {
+                                byte[] plainTextBytes = new byte[cipherTextBytes.Length];
+                                int decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
+                                return Encoding.UTF8.GetString(plainTextBytes, 0, decryptedByteCount);
+                            }
                         }
                     }
                 }
+            }
+            catch
+            {
+                return ClassAlgoErrorEnumeration.AlgoError;
             }
         }
 

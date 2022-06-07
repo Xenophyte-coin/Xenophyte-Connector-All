@@ -504,7 +504,7 @@ namespace Xenophyte_Connector_All.Seed
                                                     try
                                                     {
                                                         string packetDecrypt = ClassAlgo.GetDecryptedResult(ClassAlgoEnumeration.Rijndael, bufferPacket.packet, ClassConnectorSetting.MAJOR_UPDATE_1_SECURITY_CERTIFICATE_SIZE, AesIvCertificate, AesSaltCertificate);
-
+ 
 
                                                         if (bufferPacket.packet.Contains(ClassSeedNodeCommand.ClassReceiveSeedEnumeration.WalletSendSeedNode))
                                                         {

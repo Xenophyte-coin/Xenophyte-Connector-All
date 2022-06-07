@@ -316,13 +316,9 @@ namespace Xenophyte_Connector_All.Utils
 
 
                 if (stateOfConnection != TcpState.Closed && stateOfConnection != TcpState.CloseWait && stateOfConnection != TcpState.Closing && stateOfConnection != TcpState.Unknown)
-                {
                     return true;
-                }
                 else
-                {
                     return false;
-                }
             }
             catch
             {

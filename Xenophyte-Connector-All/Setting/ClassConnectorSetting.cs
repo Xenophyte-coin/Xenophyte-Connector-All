@@ -37,12 +37,22 @@ namespace Xenophyte_Connector_All.Setting
 
         public const string NETWORK_GENESIS_DEFAULT_KEY = "XENOPHYTEKEY"; // DEFAULT GENESIS KEY [Small static part of dynamic key encryption between tools and blockchain.]
 
+        public const string NETWORK_GENESIS_DEFAULT_KEY_XIRO = "XIROPHTKEY"; // DEFAULT GENESIS KEY [Small static part of dynamic key encryption between tools and blockchain.]
+
+
         /// <summary>
         ///     UPDATES - Update done at 17/10/2018
         /// </summary>
         public static string NETWORK_GENESIS_KEY = "XENOPHYTEKEY"; // GENESIS KEY [Small static part included on dynamic key encryption between tools and blockchain, updated by the blockchain in real time.]
 
         public const string NETWORK_GENESIS_SECONDARY_KEY = "XENOPHYTESEED"; // GENESIS SECONDARY KEY [Layer encryption key included on dynamic certificate key between tools and seed nodes]
+
+        /// <summary>
+        ///     UPDATES - Update done at 17/10/2018
+        /// </summary>
+        public static string NETWORK_GENESIS_KEY_XIRO = "XIROPHTKEY"; // GENESIS KEY [Small static part included on dynamic key encryption between tools and blockchain, updated by the blockchain in real time.]
+
+        public const string NETWORK_GENESIS_SECONDARY_KEY_XIRO = "XIROPHTSEED"; // GENESIS SECONDARY KEY [Layer encryption key included on dynamic certificate key between tools and seed nodes]
 
         public const string PacketSplitSeperator = "*";
 
