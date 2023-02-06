@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
 using Xenophyte_Connector.Remote;
 using Xenophyte_Connector_All.Setting;
 using Xenophyte_Connector_All.Utils;
@@ -8,7 +10,7 @@ namespace Xenophyte_Connector_All.Remote
 {
     public class ClassRemoteNodeChecker
     {
-        public static List<Tuple<string, int>> ListRemoteNodeChecked = new List<Tuple<string, int>>();
+        public static List<Tuple<IPAddress, int>> ListRemoteNodeChecked = new List<Tuple<IPAddress, int>>();
         public static bool InCheckingNewRemoteNode;
 
 
@@ -16,7 +18,7 @@ namespace Xenophyte_Connector_All.Remote
         ///     Permit to check new remote node host.
         /// </summary>
         /// <param name="ip"></param>
-        public static async System.Threading.Tasks.Task<string> CheckNewRemoteNodeHostAsync(string ip)
+        public static async Task<string> CheckNewRemoteNodeHostAsync(IPAddress ip)
         {
             InCheckingNewRemoteNode = true;
             var statusPing = CheckPing.CheckPingHost(ip);
@@ -36,14 +38,14 @@ namespace Xenophyte_Connector_All.Remote
                                 exist = true;
                         if (!exist)
                         {
-                            ListRemoteNodeChecked.Add(new Tuple<string, int>(ip, statusPing));
+                            ListRemoteNodeChecked.Add(new Tuple<IPAddress, int>(ip, statusPing));
                             return ClassRemoteNodeStatus.StatusNew;
                         }
 
                         return ClassRemoteNodeStatus.StatusAlive;
                     }
 
-                    ListRemoteNodeChecked.Add(new Tuple<string, int>(ip, statusPing));
+                    ListRemoteNodeChecked.Add(new Tuple<IPAddress, int>(ip, statusPing));
                     return ClassRemoteNodeStatus.StatusNew;
                 }
             }
@@ -74,7 +76,7 @@ namespace Xenophyte_Connector_All.Remote
         /// </summary>
         /// <param name="ip"></param>
         /// <returns></returns>
-        public static bool CheckRemoteNodeHostExist(string ip)
+        public static bool CheckRemoteNodeHostExist(IPAddress ip)
         {
             for (var i = 0; i < ListRemoteNodeChecked.Count - 1; i++)
                 if (ListRemoteNodeChecked[i].Item1 == ip)

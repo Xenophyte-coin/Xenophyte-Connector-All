@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -99,9 +100,9 @@ namespace Xenophyte_Connector_All.Wallet
 
     public class ClassWalletConnectToRemoteNode : IDisposable
     {
-        private TcpClient _remoteNodeClient;
+        private Socket _remoteNodeClient;
         private string _remoteNodeClientType;
-        public string RemoteNodeHost;
+        public IPAddress RemoteNodeHost;
         public bool RemoteNodeStatus;
         public int TotalInvalidPacket;
         public bool Disposed;
@@ -157,7 +158,7 @@ namespace Xenophyte_Connector_All.Wallet
         /// <param name="port"></param>
         /// <param name="isLinux"></param>
         /// <returns></returns>
-        public async Task<bool> ConnectToRemoteNodeAsync(string host, int port, bool isLinux = false)
+        public async Task<bool> ConnectToRemoteNodeAsync(IPAddress host, int port, bool isLinux = false)
         {
             MalformedPacket = string.Empty;
 
@@ -175,12 +176,13 @@ namespace Xenophyte_Connector_All.Wallet
             try
             {
                 RemoteNodeStatus = true;
-                _remoteNodeClient = new TcpClient();
                 if(!await ConnectToTarget(host, port))
                 {
                     RemoteNodeStatus = false;
                     return false;
                 }
+
+                _remoteNodeClient.SetSocketKeepAliveValues(24 * 60, 60);
             }
             catch (Exception error)
             {
@@ -192,15 +194,7 @@ namespace Xenophyte_Connector_All.Wallet
             }
 
             RemoteNodeHost = host;
-            try
-            {
-                _remoteNodeClient.SetSocketKeepAliveValues(20 * 60 * 1000, 30 * 1000);
-            }
-            catch
-            {
-                DisconnectRemoteNodeClient();
-                return false;
-            }
+
             await Task.Factory.StartNew(EnableCheckConnection, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
             
             return true;
@@ -238,10 +232,12 @@ namespace Xenophyte_Connector_All.Wallet
         }
 
 
-        private async Task<bool> ConnectToTarget(string host, int port)
+        private async Task<bool> ConnectToTarget(IPAddress host, int port)
         {
 
-            var clientTask = _remoteNodeClient.ConnectAsync(host, port);
+            _remoteNodeClient = new Socket(host.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+            Task clientTask = _remoteNodeClient.ConnectAsync(host, port);
             var delayTask = Task.Delay(ClassConnectorSetting.MaxTimeoutConnectRemoteNode);
 
             var completedTask = await Task.WhenAny(new[] { clientTask, delayTask });
@@ -259,9 +255,9 @@ namespace Xenophyte_Connector_All.Wallet
         {
             try
             {
-                if (_remoteNodeClient?.Client != null)
+                if (_remoteNodeClient != null)
                 {
-                    using (var remoteNodeStream = new NetworkStream(_remoteNodeClient.Client))
+                    using (var remoteNodeStream = new NetworkStream(_remoteNodeClient))
                     {
                         using (var bufferedStreamNetwork = new BufferedStream(remoteNodeStream,
                             ClassConnectorSetting.MaxNetworkPacketSize))
@@ -346,9 +342,9 @@ namespace Xenophyte_Connector_All.Wallet
             }
             try
             {
-                if (_remoteNodeClient?.Client != null)
+                if (_remoteNodeClient != null)
                 {
-                    using (var _remoteNodeStream = new NetworkStream(_remoteNodeClient.Client))
+                    using (var _remoteNodeStream = new NetworkStream(_remoteNodeClient))
                     {
                         using (var bufferedStream = new BufferedStream(_remoteNodeStream,
                             ClassConnectorSetting.MaxNetworkPacketSize))
@@ -443,9 +439,9 @@ namespace Xenophyte_Connector_All.Wallet
 
             try
             {
-                if (_remoteNodeClient?.Client != null)
+                if (_remoteNodeClient != null)
                 {
-                    using (var remoteNodeStream = new NetworkStream(_remoteNodeClient.Client))
+                    using (var remoteNodeStream = new NetworkStream(_remoteNodeClient))
                     {
                         using (var bufferedStreamNetwork = new BufferedStream(remoteNodeStream,
                             ClassConnectorSetting.MaxNetworkPacketSize))

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace Xenophyte_Connector_All.Setting
 {
@@ -60,14 +61,20 @@ namespace Xenophyte_Connector_All.Setting
 
         public const string PacketContentSeperator = "|";
 
-        public static Dictionary<string, Tuple<string, bool>> SeedNodeIp = new Dictionary<string, Tuple<string, bool>>
+        public const bool PriorityToIpV6 = true;
+
+        public const int PriorityIpV6ElapsedMillisecond = 30;
+
+        public readonly static Dictionary<IPAddress, Tuple<string, bool>> SeedNodeIp = new Dictionary<IPAddress, Tuple<string, bool>>
         {
-            {"87.98.156.228", new Tuple<string, bool>("FR", true) },
+            {IPAddress.Parse("2001:41d0:404:200::256c").MapToIPv6(), new Tuple<string, bool>("FR-V6", true) },
+            {IPAddress.Parse("87.98.156.228").MapToIPv4(), new Tuple<string, bool>("FR", true) },
         };
 
-        public static Dictionary<string, Tuple<int, long>> SeedNodeDisconnectScore = new Dictionary<string, Tuple<int, long>>
+        public readonly static Dictionary<IPAddress, Tuple<int, long>> SeedNodeDisconnectScore = new Dictionary<IPAddress, Tuple<int, long>>
         {
-            {"87.98.156.228", new Tuple<int, long>(0, 0)},
+            {IPAddress.Parse("2001:41d0:404:200::256c").MapToIPv6(), new Tuple<int, long>(0, 0)},
+            {IPAddress.Parse("87.98.156.228").MapToIPv4(), new Tuple<int, long>(0, 0)},
         };
 
         public const decimal MinimumWalletTransactionFee = 0.000010000m;

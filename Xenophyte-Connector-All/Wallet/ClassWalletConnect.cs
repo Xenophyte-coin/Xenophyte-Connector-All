@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Xenophyte_Connector_All.Seed;
 using Xenophyte_Connector_All.Setting;
 using Xenophyte_Connector_All.Utils;
-using Xenophyte_Connector_All.Wallet;
 
 
 namespace Xenophyte_Connector_All.Wallet

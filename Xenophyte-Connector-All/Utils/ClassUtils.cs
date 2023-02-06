@@ -289,7 +289,7 @@ namespace Xenophyte_Connector_All.Utils
             }
         }
 
-        public static bool SocketIsConnected(TcpClient socket)
+        public static bool TcpClientIsConnected(TcpClient socket)
         {
             if (socket?.Client != null)
                 try
@@ -299,6 +299,25 @@ namespace Xenophyte_Connector_All.Utils
                         return true;
                     }*/
                     return !(socket.Client.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
+                }
+                catch
+                {
+                    return false;
+                }
+
+            return false;
+        }
+
+        public static bool SocketIsConnected(Socket socket)
+        {
+            if (socket != null)
+                try
+                {
+                    /*if (isClientConnected(socket))
+                    {
+                        return true;
+                    }*/
+                    return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
                 }
                 catch
                 {

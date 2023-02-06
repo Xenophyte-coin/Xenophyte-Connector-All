@@ -1,4 +1,6 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Xenophyte_Connector_All.Setting;
 
@@ -12,10 +14,11 @@ namespace Xenophyte_Connector_All.Utils
         /// <param name="host"></param>
         /// <param name="port"></param>
         /// <returns></returns>
-        public static async Task<bool> CheckTcpClientAsync(string host, int port)
+        public static async Task<bool> CheckTcpClientAsync(IPAddress host, int port)
         {
             try
-            {
+            {    
+
                 return await ConnectToTarget(host, port);
             }
             catch
@@ -25,13 +28,18 @@ namespace Xenophyte_Connector_All.Utils
         }
 
 
-        private static async Task<bool> ConnectToTarget(string host, int port)
+        private static async Task<bool> ConnectToTarget(IPAddress host, int port)
         {
+
             using (var client = new TcpClient())
             {
-                var clientTask = client.ConnectAsync(host, port);
+
+                Console.WriteLine("Try to connect to: " + host.ToString());
+
+                Task clientTask = client.ConnectAsync(host, port);
+
                 var timeoutConnect = ClassConnectorSetting.MaxTimeoutConnectRemoteNode;
-                if (host == "127.0.0.1" || host == "localhost")
+                if (host.ToString() == "127.0.0.1" || host.ToString() == "localhost")
                 {
                     timeoutConnect = ClassConnectorSetting.MaxTimeoutConnectLocalhostRemoteNode;
                 }

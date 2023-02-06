@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Security.Permissions;
@@ -90,10 +91,10 @@ namespace Xenophyte_Connector_All.Seed
     }
     public class ClassSeedNodeConnector : IDisposable
     {
-        private TcpClient _connector;
+        private Socket _connector;
         private bool _isConnected;
         private bool disposed;
-        private string _currentSeedNodeHost;
+        private IPAddress _currentSeedNodeHost;
         public byte[] AesIvCertificate;
         public byte[] AesSaltCertificate;
         private string _malformedPacket;
@@ -128,19 +129,22 @@ namespace Xenophyte_Connector_All.Seed
         ///     Start to connect on the seed node.
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> StartConnectToSeedAsync(string host, int port = ClassConnectorSetting.SeedNodePort, bool isLinux = false, int customTimeConnect = ClassConnectorSetting.MaxTimeoutConnect)
+        public async Task<bool> StartConnectToSeedAsync(IPAddress host, int port = ClassConnectorSetting.SeedNodePort, bool isLinux = false, int customTimeConnect = ClassConnectorSetting.MaxTimeoutConnect)
         {
             _malformedPacket = string.Empty;
 
-            if (!string.IsNullOrEmpty(host))
+            if (host != null && host?.AddressFamily == AddressFamily.InterNetwork || host?.AddressFamily == AddressFamily.InterNetworkV6)
             {
 #if DEBUG
                 Console.WriteLine("Host target: " + host);
 #endif
                 try
                 {
-                    _connector = new TcpClient();
-                    var connectTask = _connector.ConnectAsync(host, port);
+
+                    _connector = new Socket(host.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                    Task connectTask = _connector.ConnectAsync(host, port);
+
                     var connectTaskDelay = Task.Delay(customTimeConnect);
 
                     var completedConnectTask = await Task.WhenAny(connectTask, connectTaskDelay);
@@ -161,18 +165,11 @@ namespace Xenophyte_Connector_All.Seed
 
                 _isConnected = true;
                 _currentSeedNodeHost = host;
-                try
-                {
-                    _connector.SetSocketKeepAliveValues(20 * 60 * 1000, 30 * 1000);
-                }
-                catch
-                {
-                    return false;
-                }
+                _connector.SetSocketKeepAliveValues(24 * 60, 60);
                 return true;
             }
 
-            Dictionary<string, int> listOfSeedNodesSpeed = new Dictionary<string, int>();
+            Dictionary<IPAddress, int> listOfSeedNodesSpeed = new Dictionary<IPAddress, int>();
             foreach (var seedNode in ClassConnectorSetting.SeedNodeIp)
             {
 
@@ -224,8 +221,12 @@ namespace Xenophyte_Connector_All.Seed
                             int maxRetry = 0;
                             while (maxRetry < ClassConnectorSetting.SeedNodeMaxRetry || success)
                             {
-                                _connector = new TcpClient();
+
+
+                                _connector = new Socket(seedNode.Key.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
                                 var connectTask = _connector.ConnectAsync(seedNode.Key, port);
+
                                 var connectTaskDelay = Task.Delay(ClassConnectorSetting.MaxSeedNodeTimeoutConnect);
 
                                 var completedConnectTask = await Task.WhenAny(connectTask, connectTaskDelay);
@@ -238,14 +239,7 @@ namespace Xenophyte_Connector_All.Seed
                                     _isConnected = true;
                                     _currentSeedNodeHost = seedNode.Key;
                                     maxRetry = ClassConnectorSetting.SeedNodeMaxRetry;
-                                    try
-                                    {
-                                        _connector.SetSocketKeepAliveValues(20 * 60 * 1000, 30 * 1000);
-                                    }
-                                    catch
-                                    {
-                                        return false;
-                                    }
+                                    _connector.SetSocketKeepAliveValues(24 * 60, 60);
                                     await Task.Factory.StartNew(EnableCheckConnectionAsync, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
 
                                     return true;
@@ -347,7 +341,7 @@ namespace Xenophyte_Connector_All.Seed
             try
             {
 
-                using (var bufferedNetworkStream = new NetworkStream(_connector.Client))
+                using (var bufferedNetworkStream = new NetworkStream(_connector))
                 {
 
                     // 10/08/2018 - MAJOR_UPDATE_1_SECURITY
@@ -423,7 +417,7 @@ namespace Xenophyte_Connector_All.Seed
                 {
                     using (var bufferPacket = new ClassSeedNodeConnectorObjectPacket())
                     {
-                        using (var bufferedNetworkStream = new NetworkStream(_connector.Client))
+                        using (var bufferedNetworkStream = new NetworkStream(_connector))
                         {
 
                             int received = 0;
@@ -476,7 +470,7 @@ namespace Xenophyte_Connector_All.Seed
                                                                     var packetNewSeedNode = packetDecrypt.Replace(ClassSeedNodeCommand.ClassReceiveSeedEnumeration.WalletSendSeedNode, "");
                                                                     packetNewSeedNode = packetNewSeedNode.Replace(ClassConnectorSetting.PacketSplitSeperator, "");
                                                                     var splitPacketNewSeedNode = packetNewSeedNode.Split(new[] { ";" }, StringSplitOptions.None);
-                                                                    var newSeedNodeHost = splitPacketNewSeedNode[0];
+                                                                    var newSeedNodeHost = IPAddress.Parse(splitPacketNewSeedNode[0]);
                                                                     var newSeedNodeCountry = splitPacketNewSeedNode[1];
 
                                                                     if (!ClassConnectorSetting.SeedNodeIp.ContainsKey(newSeedNodeHost))
@@ -510,7 +504,7 @@ namespace Xenophyte_Connector_All.Seed
                                                         {
                                                             var packetNewSeedNode = packetDecrypt.Replace(ClassSeedNodeCommand.ClassReceiveSeedEnumeration.WalletSendSeedNode, "");
                                                             var splitPacketNewSeedNode = packetNewSeedNode.Split(new[] { ";" }, StringSplitOptions.None);
-                                                            var newSeedNodeHost = splitPacketNewSeedNode[0];
+                                                            var newSeedNodeHost = IPAddress.Parse(splitPacketNewSeedNode[0]);
                                                             var newSeedNodeCountry = splitPacketNewSeedNode[1];
                                                             if (!ClassConnectorSetting.SeedNodeIp.ContainsKey(newSeedNodeHost))
                                                             {
@@ -597,7 +591,7 @@ namespace Xenophyte_Connector_All.Seed
         /// Return the current seed node host used.
         /// </summary>
         /// <returns></returns>
-        public string ReturnCurrentSeedNodeHost()
+        public IPAddress ReturnCurrentSeedNodeHost()
         {
             return _currentSeedNodeHost;
         }
@@ -607,7 +601,9 @@ namespace Xenophyte_Connector_All.Seed
         /// </summary>
         public void DisconnectToSeed()
         {
-            if (!string.IsNullOrEmpty(_currentSeedNodeHost))
+            if (_currentSeedNodeHost == null || 
+                _currentSeedNodeHost.AddressFamily == AddressFamily.InterNetwork ||
+                _currentSeedNodeHost.AddressFamily == AddressFamily.InterNetworkV6)
             {
                 if (ClassConnectorSetting.SeedNodeDisconnectScore.ContainsKey(_currentSeedNodeHost))
                 {
@@ -617,7 +613,7 @@ namespace Xenophyte_Connector_All.Seed
             }
             ClassConnectorSetting.NETWORK_GENESIS_KEY = ClassConnectorSetting.NETWORK_GENESIS_DEFAULT_KEY;
             _isConnected = false;
-            _currentSeedNodeHost = string.Empty;
+            _currentSeedNodeHost = null;
             _malformedPacket = string.Empty;
             AesIvCertificate = null;
             AesSaltCertificate = null;
