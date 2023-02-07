@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -173,20 +174,61 @@ namespace Xenophyte_Connector_All.Seed
             foreach (var seedNode in ClassConnectorSetting.SeedNodeIp)
             {
 
+#if DEBUG
+#if DEBUG
+                         Console.WriteLine(seedNode.Key + " test response time in ms.");
+#endif
+#endif
                 try
                 {
-                    int seedNodeResponseTime = -1;
-                    Task taskCheckSeedNode = Task.Run(() => seedNodeResponseTime = CheckPing.CheckPingHost(seedNode.Key, true));
-                    taskCheckSeedNode.Wait(ClassConnectorSetting.MaxPingDelay);
-                    if (seedNodeResponseTime == -1)
+                    if (seedNode.Key.AddressFamily != AddressFamily.InterNetworkV6)
                     {
-                        seedNodeResponseTime = ClassConnectorSetting.MaxSeedNodeTimeoutConnect;
-                    }
+                        int seedNodeResponseTime = -1;
+                        Task taskCheckSeedNode = Task.Run(() => seedNodeResponseTime = CheckPing.CheckPingHost(seedNode.Key, true));
+                        taskCheckSeedNode.Wait(ClassConnectorSetting.MaxPingDelay);
+                        if (seedNodeResponseTime == -1)
+                        {
+                            seedNodeResponseTime = ClassConnectorSetting.MaxSeedNodeTimeoutConnect;
+                        }
 #if DEBUG
-                    Console.WriteLine(seedNode.Key + " response time: " + seedNodeResponseTime + " ms.");
+                         Console.WriteLine(seedNode.Key + " response time: " + seedNodeResponseTime + " ms.");
 #endif
-                    listOfSeedNodesSpeed.Add(seedNode.Key, seedNodeResponseTime);
+                        listOfSeedNodesSpeed.Add(seedNode.Key, seedNodeResponseTime);
+                    }
+                    else
+                    {
+                        bool connectSuccess = false;
 
+                        Stopwatch stopWatch = new Stopwatch();
+                        stopWatch.Start();
+
+                        try
+                        {
+                            using (Socket tcpClient = new Socket(host.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
+                            {
+                                await tcpClient.ConnectAsync(host, port);
+                                connectSuccess = true;
+                                tcpClient.Close();
+                            }
+                        }
+                        catch
+                        {
+                            if (!connectSuccess)
+                                listOfSeedNodesSpeed.Add(seedNode.Key, ClassConnectorSetting.MaxSeedNodeTimeoutConnect);
+                        }
+
+                        stopWatch.Stop();
+
+                        if (connectSuccess)
+                        {
+#if DEBUG
+                         Console.WriteLine(seedNode.Key + " IPV6 | response time: " + stopWatch.ElapsedMilliseconds + " ms.");
+#endif
+                            listOfSeedNodesSpeed.Add(seedNode.Key,
+                                ClassConnectorSetting.PriorityToIpV6 ?
+                                (int)stopWatch.ElapsedMilliseconds - ClassConnectorSetting.PriorityIpV6ElapsedMillisecond : (int)stopWatch.ElapsedMilliseconds);
+                        }
+                    }
                 }
                 catch
                 {

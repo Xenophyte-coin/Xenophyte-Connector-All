@@ -31,7 +31,7 @@ namespace Xenophyte_Connector_All.Utils
         private static async Task<bool> ConnectToTarget(IPAddress host, int port)
         {
 
-            using (var client = new TcpClient())
+            using (var client = new Socket(host.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
             {
 
                 Console.WriteLine("Try to connect to: " + host.ToString());

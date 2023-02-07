@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using Xenophyte_Connector_All.Setting;
@@ -20,29 +21,60 @@ namespace Xenophyte_Connector_All.Utils
                 {
 
 
-            
 
-                    PingReply replyNode = pingTestNode.Send(host);
+                    if (host.AddressFamily != AddressFamily.InterNetworkV6)
+                    {
+                        PingReply replyNode = pingTestNode.Send(host);
 
-                    if (replyNode.Status == IPStatus.Success)
-                    {
-                        if (ClassConnectorSetting.PriorityToIpV6)
+                        if (replyNode.Status == IPStatus.Success)
                         {
-                            if (host.AddressFamily == AddressFamily.InterNetworkV6)
-                               return (int)replyNode.RoundtripTime - ClassConnectorSetting.PriorityIpV6ElapsedMillisecond;
-                        }
-                        return (int)replyNode.RoundtripTime;
-                    }
-                    else
-                    {
-                        if (checkSeed)
-                        {
-                            return ClassConnectorSetting.MaxTimeoutConnect;
+                            return (int)replyNode.RoundtripTime;
                         }
                         else
                         {
-                            return ClassConnectorSetting.MaxTimeoutConnectRemoteNode;
+                            if (checkSeed)
+                            {
+                                return ClassConnectorSetting.MaxTimeoutConnect;
+                            }
+                            else
+                            {
+                                return ClassConnectorSetting.MaxTimeoutConnectRemoteNode;
+                            }
                         }
+                    }
+                    else
+                    {
+                        int result = 0;
+                        bool connectSuccess = false;
+                        Stopwatch stopwatch = new Stopwatch();
+
+                        try
+                        {
+                            using(Socket tcpClient = new Socket(host.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
+                            {
+                                tcpClient.Connect(host, checkSeed ? ClassConnectorSetting.SeedNodePort : ClassConnectorSetting.RemoteNodePort);
+                                connectSuccess = true;
+                            }
+                        }
+                        catch
+                        {
+                            if (checkSeed)
+                                result = ClassConnectorSetting.MaxTimeoutConnect;
+                            else
+                                result = ClassConnectorSetting.MaxTimeoutConnectRemoteNode;
+
+                        }
+
+                        stopwatch.Stop();
+
+                        if (connectSuccess)
+                        {
+                            return ClassConnectorSetting.PriorityToIpV6 ?
+                                (int)stopwatch.ElapsedMilliseconds - ClassConnectorSetting.PriorityIpV6ElapsedMillisecond :
+                                (int)stopwatch.ElapsedMilliseconds;
+                        }
+
+                        return result;
                     }
                 }
             }
