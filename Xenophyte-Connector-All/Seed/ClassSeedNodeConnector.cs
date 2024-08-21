@@ -340,6 +340,8 @@ namespace Xenophyte_Connector_All.Seed
             return false;
         }
 
+
+
         /// <summary>
         /// Check the connection opened to the network.
         /// </summary>
@@ -643,15 +645,22 @@ namespace Xenophyte_Connector_All.Seed
         /// </summary>
         public void DisconnectToSeed()
         {
-            if (_currentSeedNodeHost == null || 
-                _currentSeedNodeHost.AddressFamily == AddressFamily.InterNetwork ||
-                _currentSeedNodeHost.AddressFamily == AddressFamily.InterNetworkV6)
+            try
             {
-                if (ClassConnectorSetting.SeedNodeDisconnectScore.ContainsKey(_currentSeedNodeHost))
+                if (_currentSeedNodeHost == null ||
+                    _currentSeedNodeHost.AddressFamily == AddressFamily.InterNetwork ||
+                    _currentSeedNodeHost.AddressFamily == AddressFamily.InterNetworkV6)
                 {
-                    int totalDisconnection = ClassConnectorSetting.SeedNodeDisconnectScore[_currentSeedNodeHost].Item1 + 1;
-                    ClassConnectorSetting.SeedNodeDisconnectScore[_currentSeedNodeHost] = new Tuple<int, long>(totalDisconnection, ClassUtils.DateUnixTimeNowSecond());
+                    if (ClassConnectorSetting.SeedNodeDisconnectScore.ContainsKey(_currentSeedNodeHost))
+                    {
+                        int totalDisconnection = ClassConnectorSetting.SeedNodeDisconnectScore[_currentSeedNodeHost].Item1 + 1;
+                        ClassConnectorSetting.SeedNodeDisconnectScore[_currentSeedNodeHost] = new Tuple<int, long>(totalDisconnection, ClassUtils.DateUnixTimeNowSecond());
+                    }
                 }
+            }
+            catch
+            {
+                // Ignored.
             }
             ClassConnectorSetting.NETWORK_GENESIS_KEY = ClassConnectorSetting.NETWORK_GENESIS_DEFAULT_KEY;
             _isConnected = false;

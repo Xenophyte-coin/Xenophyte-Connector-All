@@ -67,14 +67,14 @@ namespace Xenophyte_Connector_All.Setting
 
         public readonly static Dictionary<IPAddress, Tuple<string, bool>> SeedNodeIp = new Dictionary<IPAddress, Tuple<string, bool>>
         {
-            {IPAddress.Parse("2001:41d0:404:200::256c"), new Tuple<string, bool>("FR-IPV6", true) },
-            {IPAddress.Parse("87.98.156.228"), new Tuple<string, bool>("FR-IPV4", true) },
+            { IPAddress.Parse("2001:41d0:404:200::256c"), new Tuple<string, bool>("FR-IPV6", true) },
+            {IPAddress.Parse("142.44.251.31"), new Tuple<string, bool>("FR-IPV4", true) },
         };
 
         public readonly static Dictionary<IPAddress, Tuple<int, long>> SeedNodeDisconnectScore = new Dictionary<IPAddress, Tuple<int, long>>
         {
             {IPAddress.Parse("2001:41d0:404:200::256c"), new Tuple<int, long>(0, 0)},
-           {IPAddress.Parse("87.98.156.228"), new Tuple<int, long>(0, 0)},
+           {IPAddress.Parse("142.44.251.31"), new Tuple<int, long>(0, 0)},
         };
 
         public const decimal MinimumWalletTransactionFee = 0.000010000m;
